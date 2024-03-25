@@ -1,0 +1,52 @@
+
+-- Primer Trigger
+
+llamado Tr_Insertar_Factura, se activará después de insertar una fila en la tabla Productos. Su objetivo es insertar una nueva fila en la tabla FACTURAS con los siguientes valores:
+nro_factura: El valor de nro_factura de la fila recién insertada en Facturas
+fecha: La fecha actual obtenida mediante la función CURDATE().
+id_clinica: El valor de id_clinica de la fila recién insertada en Facturas.
+id_paciente: El valor de id_paciente de la fila recién insertada en Facturas.
+nro_dentista: El valor de nro_dentista de la fila recién insertada en Facturas.
+
+
+En resumen, cada vez que se inserta un nuevo producto, este trigger asegura que se registre automáticamente una nueva factura en la tabla FACTURAS con la información correspondiente. Asi se mantendrá Actualizada la BD garantizando automatización , que ahorrara tiempo y mantener la seguridad e integridad de los Datos que se almacenan en la BD Centro_Odontologico.
+
+
+
+DELIMITER $$
+CREATE TRIGGER Tr_Insertar_Facturas AFTER INSERT ON Facturas
+FOR EACH ROW
+BEGIN
+INSERT INTO Facturas_auditoria (nro_factura, fecha, id_clinica, id_paciente, nro_dentista)
+VALUES (NEW.nro_factura, CURDATE(), NEW.id_clinica, NEW.id_paciente, NEW.nro_dentista);
+END$$
+DELIMITER ;
+
+
+
+-- Segundo Trigger
+
+El Trigger llamado  TRA_Update_paci se Activara Automaticamente al momento en el que el Usuario con permisos  Actualize los datos de un Paciente en particular , permitiendole Modificar datos que sean necessarios para llevar un correcto control de toda la informacion de nuestros pacientes brindando la seguridad e integridad de su Informacion.
+
+DELIMITER $$ 
+
+CREATE TRIGGER TRA_Update_paci AFTER INSERT ON Pacientes
+FOR EACH ROW
+BEGIN
+    UPDATE Pacientes_actualizacion
+    SET nombre = NEW.nombre,
+        apellido = NEW.apellido,
+        nro_telefono = NEW.nro_telefono,
+        fecha_nacimiento = NEW.fecha_nacimiento,
+        nro_documento = NEW.nro_documento,
+        email = NEW.email,
+        calle = NEW.calle,
+        altura = NEW.altura,
+        id_tipo_doc = NEW.id_tipo_doc,
+        id_barrio = NEW.id_barrio,
+        id_obra_social = NEW.id_obra_social
+    WHERE id_paciente = NEW.id_paciente;
+END $$
+DELIMITER ;
+
+

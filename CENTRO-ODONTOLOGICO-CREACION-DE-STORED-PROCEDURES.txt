@@ -1,0 +1,63 @@
+-- Primer Stored Procedure
+
+Mediante el siguiente Stored Procedure vamos a poder llevar un control mas registrado de todos los procedimientos que se practican o que se llevan a cabo en la Clínica DENTISLL. Esto nos traerá muchos beneficios ya que podremos evaluar el precio de dichos procedimientos y llevar un control y modificar en caso que el tratamiento aumente su valor, de todas formas, también llevar a cabo promociones a nuestros clientes para que puedan beneficiarse y realizarse mas de un tratamiento. Esto va a incrementar el trabajo de los dentistas y por en de vamos a obtener un mejor trabajo mas practicidad y satisfacción de nuestros pacientes. Y lograr que en un futuro, aumente la capacidad de clientes y expandir la clínica. Se trabajo sobre la Tabla de Procedimientos_Odontologicos que tiene los campos de (Id_procedimiento , Nombre , Precio ).
+
+
+
+DELIMITER//
+
+ CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_get_procedimientos`(IN precio_minimo DECIMAL(10,2), IN precio_maximo DECIMAL(10,2))
+BEGIN
+SELECT	
+id_proc_odontologico AS ID_PROCEDIMIENTO,
+nombre AS NOMBRE,
+precio AS PRECIO
+FROM
+procedimientos_odontologicos
+WHERE
+precio BETWEEN precio_minimo AND precio_maximo
+ORDER BY
+nombre ASC;
+END //
+
+DELIMITER;
+
+
+-- Llamar al  SP call centro_odontologico.sp_get_procedimientos(50000, 180000);
+
+
+
+
+
+-- Segundo Stored Procedure
+
+Este stored procedure nos permitira tener un control mas regularizado de nuestros insturmentos para garantizar la totalidad  de sus correctos funcionamientos  , para brindar mayor confort y seguridad a nuestros pacientes. Se implemento dicho control que nos permitira ver cuando fue la ultima fecha en la que se realizo el control del instrumento   y asi poder determinar el estado del mismo este control se realiza para obtener un informe de como esta el estadoi de los insturmentos utilizados en la clinica , asi poder ver si necesitan mantenimientos  o se obtara por el cambio del instrumento por otro mas actualizado en el mercado actual.
+Asi se mantendra la calidad  y seguridad de nuestras herramientas brindando el mejor servicio dental a nuestros clientes. 
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE SP_obtener_fechas_revision (IN id_instrumentos INT)
+BEGIN
+    SELECT id_instrumento AS IDENTIFICADOR, nombre AS NOMBRE,nro_serie AS NUMERO_SERIE, fecha_ult_revision AS ULTIMA_REVISION, fecha_proxima_revision AS PROXIMA_REVISION
+    FROM instrumentos
+    WHERE id_instrumento = id_instrumentos
+     AND fecha_ult_revision IS NOT NULL
+    AND fecha_proxima_revision IS NOT NULL
+    ORDER BY  nombre ASC;
+END //
+DELIMITER ;
+
+
+
+-- Llamar al  SP  call centro_odontologico.SP_obtener_fechas_revision(5);
+
+
+
+
+

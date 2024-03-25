@@ -1,0 +1,56 @@
+-- Primer Funcion - `F_obtener_paciente_y_dentista`
+
+A través de la siguiente función vamos a poder determinar con el ingreso de un numero , quien fue el paciente que se atendió y cual fue su dentista de cabecera, esto nos permitirá brindar un mejor seguimiento para poder brindarle al paciente un diagnostico completo , con el tratamiento que realizo y cual fue su dentista a cargo del mismo. Estaremos Implementando la Tabla de (Facturas Pacientes y Dentistas) de esta manera estaremos uniendo tablas mediante un JOIN el cual nos permitirá obtener una función de acuerdo a lo realizado.
+
+
+
+
+DELIMITER // 
+
+CREATE DEFINER=`root`@`localhost` FUNCTION `F_obtener_paciente_y_dentista`(nro_factura_param INT) RETURNS varchar(255) CHARSET utf8mb4
+DETERMINISTIC
+BEGIN
+DECLARE paciente_dentista VARCHAR(255);
+SELECT CONCAT('Paciente: ', p.nombre, ' ', p.apellido, ', Dentista: ', d.nombre, ' ', d.apellido)
+INTO paciente_dentista
+FROM facturas f
+JOIN pacientes p ON f.id_paciente = p.id_paciente
+JOIN dentistas d ON f.nro_dentista = d.nro_dentista
+WHERE f.nro_factura = nro_factura_param;
+RETURN paciente_dentista;
+END //
+
+DELIMITER;
+
+
+
+
+-- Segunda Funcion  -
+
+
+
+
+-- Esta Funcion nos permitira hacer un reporte sobre nuestros pacientes, obteniendo asi datos  como  Nombre , Apellido ,  Fecha de la Ultima Revision , el nombre del procedimiento que se llevo a cabo esa fecha  y un calculo entre la ultima fecha  y la fecha actual. 
+Esto nos dara  los dias Exactos  que pasaron entre  que el paciente se atendio , esta informacion nos sera de utilidad para contactarnos con el pacientes y ofrecerles un descuentos  o promociones para su proximo tratamiento.
+Asi mantener el flujo constante de nuestros clientes y lograr un crecimiento de tratamientos y atenciones dentales. 
+
+
+
+
+DELIMITER //
+
+CREATE FUNCTION F_obtener_info_dias(id_pac int) RETURNS VARCHAR(255)
+DETERMINISTIC
+BEGIN
+    DECLARE info VARCHAR(255);
+    SELECT CONCAT(pacientes.nombre, ' ', pacientes.apellido, ' - ', facturas.fecha, ' - ', PROCEDIMIENTOS_ODONTOLOGICOS.nombre, ' - ', DATEDIFF(CURDATE(), facturas.fecha), ' días transcurridos')
+    INTO info
+    FROM DETALLE_FACTURAS
+    JOIN facturas ON DETALLE_FACTURAS.nro_factura = facturas.nro_factura
+    JOIN pacientes ON facturas.id_paciente = pacientes.id_paciente
+    JOIN PROCEDIMIENTOS_ODONTOLOGICOS ON DETALLE_FACTURAS.id_proc_odontologico = PROCEDIMIENTOS_ODONTOLOGICOS.id_proc_odontologico
+    WHERE pacientes.id_paciente = id_pac;
+    RETURN info;
+END//
+
+DELIMITER ;

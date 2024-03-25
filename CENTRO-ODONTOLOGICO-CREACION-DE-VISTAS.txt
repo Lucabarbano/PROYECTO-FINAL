@@ -1,0 +1,245 @@
+-- Primer Vista - vista_instrumentos
+
+
+Se necesita llevar a cabo Un registro de todos los instrumentos utilizados en los distintos consultorios de la Clínica Dental DentisLL, para ellos deberá mostrar los siguientes Datos,
+Identificador, Nombre, Nro_Serie, Marca y País de Origen de dichos Instrumentos, también cuando fue que se los Adquirido, ultima resion que tuvieron y cuando se los volverá a chequear,
+También Mostar A que Consultorio pertenecen y el Nombre y Apellido del Dentista a cargo de él, como así también su Especialidad dentro de la Clínica. Listar solo aquellos Instrumentos
+que fueron comprados en el año 2016, que no tengas campos vacíos y que en las Especialidades Muestre solo los datos que estén entre la Letra M y Z y Ordenar Alfabéticamente el Nombre de
+Dicho Instrumento. Rotular
+
+
+
+TABLAS UTILIZADAS: 
+* INSTRUMENTOS_CONSULTORIO
+* INSTRUMENTOS
+* MARCAS
+* PAISES
+* DENTISTAS
+* CONSULTORIOS
+* ESPECIALIDADES
+* CLINICAS
+
+
+
+CREATE OR REPLACE VIEW vista_instrumentos AS
+SELECT IC.id_instrumento_consultorio AS 'IDENTIFICADOR IC',I.nombre AS 'NOMBRE',I.nro_serie AS 'NRO_SERIE',M.marca AS 'MARCA',P.descripcion AS 'ORIGEN',
+C.descripcion AS 'NOMBRE CONSULTORIO',CONCAT(D.apellido, ' ', D.nombre) AS 'DENTISTA',E.descripcion AS 'ESPECIALIDAD',I.fecha_adquisicion AS 'ADQUISICION',
+I.fecha_ult_revision AS 'ULT- REVISION',I.fecha_proxima_revision AS 'PROX -REVISION'
+FROM INSTRUMENTOS_CONSULTORIOS IC,INSTRUMENTOS I,MARCAS M,PAISES P,DENTISTAS D,CONSULTORIOS C,ESPECIALIDADES E,CLINICAS CL
+WHERE IC.id_instrumento = I.id_instrumento
+AND IC.nro_dentista = D.nro_dentista
+AND IC.id_consultorio = C.id_consultorio
+AND I.id_marca = M.id_marca
+AND I.id_pais = P.id_pais
+AND D.id_especialidad = E.id_especialidad
+AND C.id_clinica = CL.id_clinica
+AND YEAR(I.fecha_adquisicion) IN (2016)
+AND I.fecha_proxima_revision IS NOT NULL
+AND E.descripcion BETWEEN 'M' AND 'Z'
+ORDER BY I.nombre DESC;
+
+
+
+-- Segunda Vista - vista_facturas
+
+
+
+“Se quiere saber de la clínica dental: Las facturas con los campos (nro_factura, fecha), el nombre de la clínica,
+el nombre completo del dentista en una sola columna y lo mismo con el paciente.
+Del paciente también se requieren las formas de contacto y qué procedimiento odontológico se hizo,
+el precio en el detalle factura y la forma en que pagó el procedimiento.
+Agregar un alias a los campos que sean necesarios.
+La fecha de la factura no tiene que ser de los años
+(2020, 2021 y 2022), el precio en el detalle factura tiene que ser inferior a 100000
+y la inicial del nombre de los pacientes tienen que estar entre la 'A' y la 'M'.
+El orden tiene que ser por las fechas más recientes y por apellido del paciente. y un tope máximo de 15 pacientes.”
+
+
+TABLAS UTILIZADAS: 
+
+* FACTURAS
+* CLINICAS
+* PACIENTES
+* DENTISTAS
+* DETALLES_FACTURAS
+* PROCEDIMIENTOS_ODONTOLOGICOS
+* FACTURAS_FORMAS_PAGOS
+* FORMAS_DE_PAGOS
+
+
+
+CREATE OR REPLACE VIEW vista_facturas AS
+SELECT
+F.NRO_FACTURA,F.FECHA,C.nombre AS CLINICA,CONCAT(D.apellido, ', ', D.nombre) AS DENTISTA,
+CONCAT(P.apellido, ', ', P.nombre) AS PACIENTES,P.NRO_TELEFONO,P.EMAIL,PO.nombre AS PROCEDIMIENTO,
+DF.PRECIO,FP.descripcion AS FORMA_PAGO
+FROM
+FACTURAS F
+INNER JOIN CLINICAS C ON F.id_clinica = C.id_clinica
+INNER JOIN PACIENTES P ON F.id_paciente = P.id_paciente
+INNER JOIN DENTISTAS D ON F.nro_dentista = D.nro_dentista
+INNER JOIN DETALLE_FACTURAS DF ON DF.nro_factura = F.nro_factura
+INNER JOIN PROCEDIMIENTOS_ODONTOLOGICOS PO ON DF.id_proc_odontologico = PO.id_proc_odontologico
+INNER JOIN FACTURAS_FORMAS_PAGOS FFP ON FFP.nro_factura = F.nro_factura
+INNER JOIN FORMAS_DE_PAGOS FP ON FFP.id_forma_pago = FP.id_forma_pago
+WHERE
+YEAR(F.fecha) NOT IN (2020, 2021, 2022)
+AND DF.precio < 100000
+AND P.nombre BETWEEN 'A' AND 'O'
+ORDER BY
+F.fecha DESC
+LIMIT 15;
+
+
+
+
+-- Tercer Vista  vista_pacientes
+
+“Se solicita mostrar los Primero 10 Pacientes con sus Respectivos Datos como (Apellidos,Nombres,Documentos,Telefonos yCorreos Electrónico), 
+A su vez también Mostar la Fecha de aquellos pacientes que se Atendieron entre el Año 2017 a 2023.
+Que Dentista lo atendió, que tipo de arreglo se llevó a cabo y mostrar todos los precios que superen el valor de $60.000   
+Los Pacientes deben estar Ordenados por su apellido Alfabéticamente , no importa que figuren los mismos pacientes en varios registros. Rotular”
+
+TABLAS UTILIZADAS: 
+
+*FACTURAS
+*PACIENTES	
+*DENTISTAS
+*DETALLE_FACTURAS
+*PROCEDIMIENTOS_ODONTOLOGICOS
+*BARRIOS
+
+
+
+
+CREATE OR REPLACE VIEW vista_pacientes AS
+
+SELECT 
+ CONCAT(P.apellido, ', ', P.nombre ) AS 'PACIENTES',P.nro_documento AS'DOCUMENTO', P.nro_telefono'TELEFONO', P.email'CORREO ELECTRONICO',
+B.descripcion'BARRIO',F.nro_factura'FACTURA',F.fecha'FECHA',
+CONCAT(D.apellido, ' , ' ,  D.nombre)AS'Dentista', DF.precio 'PRECIO',PO.nombre'PROCEDIMIENTO'
+FROM  FACTURAS F 
+JOIN PACIENTES P ON F.id_paciente = P.id_paciente
+JOIN DENTISTAS D ON F.nro_dentista = D.nro_dentista
+JOIN DETALLE_FACTURAS DF ON F.nro_factura = DF.nro_factura
+JOIN PROCEDIMIENTOS_ODONTOLOGICOS PO ON DF.id_proc_odontologico = PO.id_proc_odontologico
+JOIN BARRIOS B ON P.id_paciente=B.id_barrio
+WHERE F.fecha BETWEEN '2017-1-1' and '2023-12-31' and DF.precio >=60000
+ORDER BY P.apellido ASC
+LIMIT 10 ;
+
+
+
+
+
+-- Cuarta Vista  Vista_Control_Herramientas
+
+/*
+Se necesitan los instrumentos de la clínica dental con toda su información, excepto el identificador. 
+La marca debe estar en mayúsculas y se deben rotular los campos necesarios. 
+Todos los instrumentos deben tener fecha de próxima revisión y haber sido adquiridos en los meses (3, 8, 9 y 10) de cualquier año. 
+Ordenar por fecha de adquisición de más antigua a más reciente y por nombre de instrumento de la 'Z' a la 'A'. 
+Seleccionar solo los primeros 5 instrumentos que cumplan con estas condiciones.
+Ademas incorporar una tablas Temporales o Volatiles  para realizar un calculo con la funcion (TIMESTAMPDIFF) y asi poder calcular cuantos meses faltasn para que 
+se lleve a cabo la proxima revicion del Instrumento
+*/
+
+/*
+TABLAS UTILIZADAS:
+*INSTRUMENTOS
+*MARCA
+*PAISES
+*/
+
+
+CREATE OR REPLACE VIEW  Vista_Control_Herramientas AS
+SELECT  I.nombre 'INSTRUMENTOS', I.nro_serie AS 'SERIAL', M.marca AS'MARCA', P.descripcion 'PAIS',
+I.fecha_adquisicion AS 'ADQUISICION', I.fecha_ult_revision AS 'ULTIMA_REVISION', I.fecha_proxima_revision AS 'PROXIMA_REVISION',
+CONCAT(TIMESTAMPDIFF(MONTH, I.fecha_ult_revision, I.fecha_proxima_revision),'- meses') AS 'TIEMPO'
+FROM INSTRUMENTOS I
+JOIN MARCAS M ON I.id_marca = M.id_marca
+JOIN PAISES P ON I.id_pais = P.id_pais
+WHERE I.fecha_proxima_revision IS NOT NULL
+AND MONTH(I.fecha_adquisicion) IN (3, 8, 9, 10)
+ORDER BY I.fecha_adquisicion, I.nombre DESC
+LIMIT 5;
+
+
+
+
+-- Quinta Vista Vista_Forma_Pago
+
+
+
+/*
+Se necesita recuperar parte de la Informacion que se borro de la Base de Datos , los archivos que faltan son del año 2021 al 2023|
+Dichos datos a recuperar contenian informacion de la Numeracion de la Factura, el nombre completo de los Pacientes.
+Cual fue el tratamiento que se realizo en esa Fecha , el precio que figura en la Factura , como se abono , que recargo se le agrego y si la Obra social le Cubria  ciertas parte de el pago.
+Como cambiaron los tiempos los valores se Actualizaron, por ende se va a tener que crear una tabla Auxiliar para mostrar los valores de hoy 2024. Los aumentos son de un 15%.  
+*/
+
+/*TABLAS UTILIZADAS 
+*FACTURAS
+*PACIENTES
+*DETALLE_FACTURAS
+*OBRAS_SOCIALES_PROCEDIMIENTOS
+*PROCEDIMIENTOS_ODONTOLOGICOS
+*FACTURAS_FORMAS_PAGOS
+*FORMAS_DE_PAGOS
+*OBRAS_SOCIALES
+*/
+
+
+CREATE OR REPLACE VIEW Vista_Forma_De_Pago AS
+SELECT 
+    f.nro_factura AS 'FACTURA',
+    f.fecha AS 'FECHA_FACTURACION',
+    CONCAT(p.nombre, '-', p.apellido) AS 'NOMBRE_COMPLETO',
+    po.nombre AS 'TRATAMIENTO',
+    df.precio AS 'PRECIO',
+    ROUND(df.precio * 1.15, 2) AS 'PRECIO_ACTUALIZADO',
+    fdp.descripcion AS 'FORMA_PAGO',
+    fdp.recargo AS 'RECARGO',
+    os.nombre AS 'OBRA SOCIAL',
+    osp.porc_cobertura AS '% COBERTURA'
+   
+FROM 
+    FACTURAS f
+    JOIN PACIENTES p ON f.id_paciente = p.id_paciente 
+    JOIN DETALLE_FACTURAS df ON f.nro_factura = df.nro_factura
+    JOIN OBRAS_SOCIALES_PROCEDIMIENTOS osp ON df.id_proc_odontologico = osp.id_proc_odontologico
+    JOIN PROCEDIMIENTOS_ODONTOLOGICOS po ON osp.id_proc_odontologico = po.id_proc_odontologico
+    JOIN FACTURAS_FORMAS_PAGOS ffp ON f.nro_factura = ffp.nro_factura
+    JOIN FORMAS_DE_PAGOS fdp ON ffp.id_forma_pago = fdp.id_forma_pago
+    JOIN OBRAS_SOCIALES os ON osp.id_obra_social = os.id_obra_social
+WHERE 
+    f.fecha BETWEEN '2021-01-01' AND '2023-12-31'
+    AND df.precio >= 55000
+    AND p.apellido NOT LIKE '%a'
+ORDER BY 
+    p.nombre ASC;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
